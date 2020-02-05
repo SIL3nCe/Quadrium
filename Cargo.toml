@@ -1,0 +1,12 @@
+[package]
+name = "Quadrium"
+version = "0.1.0"
+authors = ["JB - TP"]
+edition = "2018"
+description = "Audio player"
+keywords = ["audio", "playback", "gamedev"]
+repository = "https://github.com/SIL3nCe/Quadrium"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
