@@ -38,7 +38,8 @@ fn main() -> std::io::Result<()>
     let reader: FlacReader = FlacReader {};
     let file_path = filePath;
     let audio_information = reader.read_information(file_path.clone());
-    println!("Audio Information\nrate: {0}\nbits per sample: {1}\nchannel count: {2}", audio_information.m_rate, audio_information.m_bitsPerSample, audio_information.m_channelCount);
+    println!("\nAudio Information\nrate: {0}\nbits per sample: {1}\nchannel count: {2}", audio_information.m_rate, audio_information.m_bitsPerSample, audio_information.m_channelCount);
+    println!("\nTrack information:\nTrackname: {0}\nArtist: {1}\nAlbum: {2}\nDate: {3}", audio_information.m_str_music_name, audio_information.m_str_artist_name, audio_information.m_str_album, audio_information.m_str_date);
 
     Ok(())
 }

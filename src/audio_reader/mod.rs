@@ -7,6 +7,9 @@ pub struct AudioInformation
     pub m_str_music_name : String,
     pub m_str_music_type : String,
     pub m_str_artist_name : String,
+    pub m_str_tracknumber: String,
+    pub m_str_album : String,
+    pub m_str_date: String,
     pub m_str_duration: String,
 
     pub m_rate: u32,
