@@ -10,3 +10,6 @@ repository = "https://github.com/SIL3nCe/Quadrium"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+dioxus = "0.3.2"
+dioxus-desktop = "0.3.0"
+symphonia = "0.5.2"

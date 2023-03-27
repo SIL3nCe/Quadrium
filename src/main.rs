@@ -1,11 +1,15 @@
 mod audio_reader;
 mod utils;
+mod GUI;
+mod Controller;
 
 use std::fs::read;
 use std::io::{Seek, SeekFrom};
 use crate::audio_reader::flac_reader::FlacReader;
 use crate::audio_reader::AudioReader;
 use std::env;
+use crate::Controller::EventManager::EventManager;
+use crate::GUI::GUIManager::GUIManager;
 
 fn main() -> std::io::Result<()>
 {
@@ -38,8 +42,10 @@ fn main() -> std::io::Result<()>
     let reader: FlacReader = FlacReader {};
     let file_path = filePath;
     let audio_information = reader.read_information(file_path.clone());
-    println!("\nAudio Information\nrate: {0}\nbits per sample: {1}\nchannel count: {2}", audio_information.m_rate, audio_information.m_bitsPerSample, audio_information.m_channelCount);
+    println!("\nAudio Information\nrate: {0}\nbits per sample: {1}\nchannel count: {2}", audio_information.m_rate, audio_information.m_bits_per_sample, audio_information.m_channel_count);
     println!("\nTrack information:\nTrackname: {0}\nArtist: {1}\nAlbum: {2}\nDate: {3}", audio_information.m_str_music_name, audio_information.m_str_artist_name, audio_information.m_str_album, audio_information.m_str_date);
+
+    GUI::launch_gui();
 
     Ok(())
 }
