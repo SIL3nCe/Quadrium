@@ -173,7 +173,7 @@ impl EventManager
                let mut need_update_bool = *lock.lock().unwrap();
                while !need_update_bool
                {
-                   let _res = cvar.wait(lock.lock().unwrap());
+                   cvar.wait(lock.lock().unwrap());
                    need_update_bool = *lock.lock().unwrap();
                }
 

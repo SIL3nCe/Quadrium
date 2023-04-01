@@ -36,7 +36,7 @@ fn read_music_information_from_event(gui_manager: &Arc<GUIManager>, event: &QuEv
     }
 }
 
-pub fn register_functions(gui_manager: Arc<GUIManager>, event_manager: Arc<Mutex<EventManager>>)
+pub fn register_event_listeners(gui_manager: Arc<GUIManager>, event_manager: Arc<Mutex<EventManager>>)
 {
     let tmp_gui_manager = gui_manager.clone();
     event_manager.lock().unwrap().register_listener(QuEventType::EMusicInformationRetrieved, move |event| {

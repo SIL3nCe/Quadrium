@@ -16,7 +16,9 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use crate::Controller;
+use std::sync::{Arc, Mutex};
+use crate::{audio_reader, Controller};
+use crate::Controller::EventManager::{EventManager, push_event_in_tmp_queue, QuEvent, QuEventType};
 use crate::Controller::QuInformationData;
 
 /// \struct MusicInformation
@@ -54,6 +56,37 @@ impl QuInformationData for AudioInformation
 
         return key_map;
     }
+}
+
+pub fn register_event_listeners(event_manager: Arc<Mutex<EventManager>>)
+{
+    event_manager.lock().unwrap().register_listener(QuEventType::EAskRetrieveMusicInformation, move |event| {
+        let argument = event.m_event_arg.convert_to_key_map();
+        if argument.len() != 1
+        {
+            return;
+        }
+
+        let flac_reader = audio_reader::flac_reader::FlacReader
+        {
+
+        };
+
+        let audio_information = flac_reader.read_information(argument[0].2.clone());
+
+        let event_to_send = QuEvent
+        {
+            m_event_type: QuEventType::EMusicInformationRetrieved,
+            m_event_arg: Arc::new(audio_information),
+        };
+
+        //
+        // Nearly safe
+        unsafe
+            {
+                push_event_in_tmp_queue(event_to_send);
+            }
+    });
 }
 
 //

@@ -48,38 +48,11 @@ pub fn launch_gui()
 fn App(cx: Scope) -> Element
 {
     let event_manager = create_event_manager();
-    EventManager::launch(event_manager.clone());
     let use_gui_manager = GUIManager::create_gui_manager();
 
-    GUIManager::register_functions(use_gui_manager, event_manager.clone());
-
-    event_manager.lock().unwrap().register_listener(QuEventType::EAskRetrieveMusicInformation, move |event| {
-        let argument = event.m_event_arg.convert_to_key_map();
-        if argument.len() != 1
-        {
-            return;
-        }
-
-        let flac_reader = audio_reader::flac_reader::FlacReader
-        {
-
-        };
-
-        let audio_information = flac_reader.read_information(argument[0].2.clone());
-
-        let event_to_send = QuEvent
-        {
-            m_event_type: QuEventType::EMusicInformationRetrieved,
-            m_event_arg: Arc::new(audio_information),
-        };
-
-        //
-        // Nearly safe
-        unsafe
-            {
-                push_event_in_tmp_queue(event_to_send);
-            }
-    });
+    GUIManager::register_event_listeners(use_gui_manager, event_manager.clone());
+    audio_reader::register_event_listeners(event_manager.clone());
+    EventManager::launch(event_manager.clone());
 
     cx.render(rsx!
     {
@@ -90,7 +63,7 @@ fn App(cx: Scope) -> Element
 
         button
         {
-            onclick: move |_event|
+            onclick: move |event|
             {
                 let args: Vec<String> = std::env::args().collect();
                 let request_music_information = AskMusicInformation {
