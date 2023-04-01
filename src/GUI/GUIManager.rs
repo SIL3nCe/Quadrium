@@ -18,9 +18,7 @@
 
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::AtomicBool;
-use dioxus::prelude::*;
-use crate::Controller::EventManager::{create_event_manager, EventManager, QuEvent, QuEventType};
-use crate::audio_reader::AudioInformation;
+use crate::Controller::EventManager::{EventManager, QuEvent, QuEventType};
 
 pub struct GUIManager
 {

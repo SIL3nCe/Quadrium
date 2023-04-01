@@ -18,14 +18,12 @@
 
 pub mod GUIManager;
 
-use dioxus::html::{ol, li, div, button};
 use dioxus::prelude::*;
 use crate::Controller::EventManager::{create_event_manager, EventManager, push_event_in_tmp_queue, QuEvent, QuEventType};
 use crate::Controller::{QuAvailableTypeInEvent, QuInformationData};
-use std::env;
 use std::sync::Arc;
 use crate::audio_reader;
-use crate::audio_reader::{AudioInformation, AudioReader};
+use crate::audio_reader::AudioReader;
 
 struct AskMusicInformation
 {
@@ -37,7 +35,7 @@ impl QuInformationData for AskMusicInformation
     fn convert_to_key_map(&self) -> Vec<(String, QuAvailableTypeInEvent, String)>
     {
         let mut vec: Vec<(String, QuAvailableTypeInEvent, String)> = Vec::new();
-        vec.push(("path_file".to_string(), QuAvailableTypeInEvent::string, self.m_path_to_file.clone()));
+        vec.push(("path_file".to_string(), QuAvailableTypeInEvent::String, self.m_path_to_file.clone()));
         return vec;
     }
 }
@@ -51,19 +49,18 @@ fn App(cx: Scope) -> Element
 {
     let event_manager = create_event_manager();
     EventManager::launch(event_manager.clone());
-    let mut use_gui_manager = GUIManager::create_gui_manager();
+    let use_gui_manager = GUIManager::create_gui_manager();
 
     GUIManager::register_functions(use_gui_manager, event_manager.clone());
 
-    let tmp_event_manager = event_manager.clone();
     event_manager.lock().unwrap().register_listener(QuEventType::EAskRetrieveMusicInformation, move |event| {
         let argument = event.m_event_arg.convert_to_key_map();
-        if (argument.len() != 1)
+        if argument.len() != 1
         {
             return;
         }
 
-        let mut flac_reader = audio_reader::flac_reader::FlacReader
+        let flac_reader = audio_reader::flac_reader::FlacReader
         {
 
         };
@@ -93,7 +90,7 @@ fn App(cx: Scope) -> Element
 
         button
         {
-            onclick: move |event|
+            onclick: move |_event|
             {
                 let args: Vec<String> = std::env::args().collect();
                 let request_music_information = AskMusicInformation {

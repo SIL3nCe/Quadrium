@@ -16,12 +16,8 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::iter::Once;
-use std::mem::MaybeUninit;
-use std::ops::Deref;
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
-use dioxus::prelude::dioxus_hot_reload::init;
 use crate::Controller::QuInformationData;
 
 #[derive(PartialEq, Clone)]
@@ -68,24 +64,24 @@ pub struct EventQueue
     m_event_list : Mutex<Vec<QuEvent>>,
 }
 
-static mut event_queue: EventQueue = EventQueue
+static mut EVENT_QUEUE: EventQueue = EventQueue
 {
     m_event_list: Mutex::new(Vec::new()),
 };
 
 pub unsafe fn push_event_in_tmp_queue(event: QuEvent)
 {
-    event_queue.m_event_list.lock().unwrap().push(event);
+    EVENT_QUEUE.m_event_list.lock().unwrap().push(event);
 }
 
 pub unsafe fn get_events_in_tmp_queue() -> Vec<QuEvent>
 {
-    return event_queue.m_event_list.lock().unwrap().clone();
+    return EVENT_QUEUE.m_event_list.lock().unwrap().clone();
 }
 
 pub unsafe fn clear_event_in_tmp_queue()
 {
-    event_queue.m_event_list.lock().unwrap().clear();
+    EVENT_QUEUE.m_event_list.lock().unwrap().clear();
 }
 
 impl EventManager
@@ -108,7 +104,7 @@ impl EventManager
         let callback_boxed = Arc::new(Mutex::new(callback));
         for tuple_event_listeners in register_event_listeners.iter_mut()
         {
-            if (tuple_event_listeners.0 == event_type)
+            if tuple_event_listeners.0 == event_type
             {
                 tuple_event_listeners.1.push(callback_boxed.clone());
                 is_added = true;
@@ -116,7 +112,7 @@ impl EventManager
             }
         }
 
-        if (!is_added)
+        if !is_added
         {
             let mut initial_vec: Vec<Arc<Mutex<dyn FnMut(&QuEvent) + Send + Sync>>> = Vec::new();
             initial_vec.push(callback_boxed.clone());
@@ -135,13 +131,13 @@ impl EventManager
         //
         // O(n³), very slow algorithm
         // Must run inside its own thread
-        let mut event_list = self.m_event_list.lock().unwrap().clone();
+        let event_list = self.m_event_list.lock().unwrap().clone();
         let mut register_event_listeners = self.m_register_event_listeners.lock().unwrap().clone();
         for event in &event_list
         {
             for tuple_event_listeners in register_event_listeners.iter_mut()
             {
-                if (event.m_event_type == tuple_event_listeners.0)
+                if event.m_event_type == tuple_event_listeners.0
                 {
                     for callback in tuple_event_listeners.1.iter_mut()
                     {
@@ -167,7 +163,7 @@ impl EventManager
     pub fn launch(this: Arc<Mutex<Self>>)
     {
         this.lock().unwrap().m_stop_update = false;
-        let mut need_update = Arc::clone(&this.lock().unwrap().m_need_update);
+        let need_update = Arc::clone(&this.lock().unwrap().m_need_update);
         thread::spawn(move || {
            while !this.lock().unwrap().m_stop_update
            {
@@ -177,7 +173,7 @@ impl EventManager
                let mut need_update_bool = *lock.lock().unwrap();
                while !need_update_bool
                {
-                   cvar.wait(lock.lock().unwrap());
+                   let _res = cvar.wait(lock.lock().unwrap());
                    need_update_bool = *lock.lock().unwrap();
                }
 

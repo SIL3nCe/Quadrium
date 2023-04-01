@@ -18,8 +18,6 @@
 
 pub mod file_reader;
 
-use std::io::Read;
-
 #[cfg(test)]
 mod test_file_reader
 {

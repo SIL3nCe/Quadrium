@@ -21,7 +21,6 @@
 
 use std::fs::File;
 use crate::utils;
-use std::io::{Seek, SeekFrom};
 use crate::audio_reader::{AudioInformation, AudioReader};
 use crate::utils::file_reader::{read_u32_from_file, read_u8_from_file};
 
@@ -110,7 +109,7 @@ fn read_streaminfo_block(file: &File) -> StreamBlockInfo
 
     //
     // Get the total samples inside the files (36bits)
-    let total_samples: u64 = ((multi_info & 0xFFFFFFFFF) as u64);
+    let total_samples: u64 = (multi_info & 0xFFFFFFFFF) as u64;
     multi_info >>= 36;
 
     //
@@ -124,29 +123,29 @@ fn read_streaminfo_block(file: &File) -> StreamBlockInfo
     multi_info >>= 3;
 
     // Get the sample rate on the next 20 bits
-    let rate: u32 = ((multi_info & 0xFFFFF) as u32);
+    let rate: u32 = (multi_info & 0xFFFFF) as u32;
     multi_info >>= 20;
 
     //
     // Get the max frame size on the 24 bits
-    let max_frame_size: u32 = ((multi_info & 0xFFFFFF) as u32);
+    let max_frame_size: u32 = (multi_info & 0xFFFFFF) as u32;
     multi_info >>= 24;
 
     //
     // Get the min frame size on the 24 bits
-    let min_frame_size: u32 = ((multi_info & 0xFFFFFF) as u32);
+    let min_frame_size: u32 = (multi_info & 0xFFFFFF) as u32;
     multi_info >>= 24;
 
     //
     // Get the max block size on the first 16 bits
-    let max_block_size: u16 = ((multi_info & 0xFFFF) as u16);
+    let max_block_size: u16 = (multi_info & 0xFFFF) as u16;
     multi_info >>= 16;
 
     assert!(multi_info == 0);
 
     //
     // Get the md5
-    let md5: u128 = utils::file_reader::read_u128_from_file(file).swap_bytes();
+    let _md5: u128 = utils::file_reader::read_u128_from_file(file).swap_bytes();
 
     //
     // Return the information
@@ -166,7 +165,7 @@ fn read_streaminfo_block(file: &File) -> StreamBlockInfo
 
 fn read_block_padding(file: &File, number_padding: u32)
 {
-    for i in 0..number_padding - 1
+    for _i in 0..number_padding - 1
     {
         read_u8_from_file(file);
     }
@@ -183,7 +182,7 @@ fn read_block_application(file: &File, size_block: u32) -> ApplicationBlock
     // Depending the application id, informations must be decoded in different ways
     let data_count = (size_block - 32)/8;
     let mut data: Vec<u8> = Vec::new();
-    for i in 0..data_count -1
+    for _i in 0..data_count -1
     {
         data.push(read_u8_from_file(file));
     }
@@ -200,7 +199,7 @@ fn read_vorbis_comment_block(file: &File, size_block: u32) -> VorbisCommentBlock
     // Get the vendor which realize the files
     let vendor_length = read_u32_from_file(file);
     let mut vendor_string: String = String::new();
-    for i in 0..vendor_length
+    for _i in 0..vendor_length
     {
         vendor_string.push(read_u8_from_file(file) as char);
     }
@@ -211,11 +210,11 @@ fn read_vorbis_comment_block(file: &File, size_block: u32) -> VorbisCommentBlock
     // Based on https://www.xiph.org/vorbis/doc/v-comment.html
     let user_comment_list_length: u32 = read_u32_from_file(file);
     let mut list_comment: Vec<String> = Vec::new();
-    for i in 0..user_comment_list_length
+    for _i in 0..user_comment_list_length
     {
         let comment_size = read_u32_from_file(file);
         let mut comment: String = String::new();
-        for j in 0..comment_size
+        for _j in 0..comment_size
         {
             comment.push(read_u8_from_file(file) as char);
         }
@@ -239,7 +238,7 @@ fn read_frame_header(file: &File, stream_info: StreamBlockInfo)
     first_value >>= 2;
 
     let sync_code = first_value & 0x3F;
-    if (sync_code != 0x2F)
+    if sync_code != 0x2F
     {
         panic!("Error when reading the flac files");
     }
@@ -274,7 +273,7 @@ impl AudioReader for FlacReader
 
         //
         // Open the file
-        let mut file = match std::fs::File::open(str_path_to_music)
+        let file = match std::fs::File::open(str_path_to_music)
         {
             Err(why) => panic!("Could not open the file !"),
             Ok(file) => file,
@@ -299,62 +298,62 @@ impl AudioReader for FlacReader
 
             //
             // Read the others metadatablock
-            while(!header_stream_info.m_is_last)
+            while !header_stream_info.m_is_last
             {
                 header_stream_info = read_metadata_header(&file);
-                if (header_stream_info.m_block_type == 1)
+                if header_stream_info.m_block_type == 1
                 {
                     println!("Padding of {0}", header_stream_info.m_length / 8);
                     read_block_padding(&file, header_stream_info.m_length / 8);
                 }
-                else if (header_stream_info.m_block_type == 2)
+                else if header_stream_info.m_block_type == 2
                 {
                     println!("ApplicationData");
                     let application_data = read_block_application(&file, header_stream_info.m_length);
                 }
-                else if (header_stream_info.m_block_type == 3)
+                else if header_stream_info.m_block_type == 3
                 {
                     println!("Seektable");
                 }
-                else if (header_stream_info.m_block_type == 4)
+                else if header_stream_info.m_block_type == 4
                 {
                     let vorbis_comment = read_vorbis_comment_block(&file, header_stream_info.m_length);
                     for comment in vorbis_comment.m_user_comment_list
                     {
                         //
                         // TODO: Fix this bad implementation
-                        if (comment.contains("ARTIST"))
+                        if comment.contains("ARTIST")
                         {
                             let artist_index = "ARTIST=".len();
                             audio_reader.m_str_artist_name = comment[artist_index..].to_string();
                         }
-                        else if (comment.contains("TITLE"))
+                        else if comment.contains("TITLE")
                         {
                             let title_index = "TITLE=".len();
                             audio_reader.m_str_music_name = comment[title_index..].to_string();
                         }
-                        else if (comment.contains("TRACKNUMBER"))
+                        else if comment.contains("TRACKNUMBER")
                         {
                             let tracknumber_index = "TRACKNUMBER=".len();
                             audio_reader.m_str_tracknumber = comment[tracknumber_index..].to_string();
                         }
-                        else if (comment.contains("DATE"))
+                        else if comment.contains("DATE")
                         {
                             let date_index = "DATE=".len();
                             audio_reader.m_str_date = comment[date_index..].to_string();
                         }
-                        else if (comment.contains("ALBUM"))
+                        else if comment.contains("ALBUM")
                         {
                             let album_index = "ALBUM=".len();
                             audio_reader.m_str_album = comment[album_index..].to_string();
                         }
                     }
                 }
-                else if (header_stream_info.m_block_type == 5)
+                else if header_stream_info.m_block_type == 5
                 {
                     println!("Cuesheet");
                 }
-                else if (header_stream_info.m_block_type == 6)
+                else if header_stream_info.m_block_type == 6
                 {
                     println!("Picture");
                 }

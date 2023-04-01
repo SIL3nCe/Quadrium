@@ -19,14 +19,14 @@
 #[derive(PartialEq)]
 pub enum QuAvailableTypeInEvent
 {
-    string,
-    float,
-    uint8,
-    uint32,
-    uint64,
-    int8,
-    int32,
-    int64,
+    String,
+    Float,
+    Uint8,
+    Uint32,
+    Uint64,
+    Int8,
+    Int32,
+    Int64,
 }
 
 pub trait QuInformationData

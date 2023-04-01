@@ -22,7 +22,7 @@ pub fn read_u8_from_file(mut file: &std::fs::File) -> u8
 {
     let u8_value : u8;
     let mut au8_buffer_magic = [0; 1];
-    file.read_exact(&mut au8_buffer_magic);
+    let _result = file.read_exact(&mut au8_buffer_magic);
     u8_value = au8_buffer_magic[0];
     if cfg!(target_endian = "big")
     {
@@ -38,7 +38,7 @@ pub fn read_u16_from_file(mut file: &std::fs::File) -> u16
 {
     let u16_value : u16;
     let mut au8_buffer = [0; 2];
-    file.read_exact(&mut au8_buffer);
+    let _result = file.read_exact(&mut au8_buffer);
     u16_value = au8_buffer[0] as u16 + (au8_buffer[1] as u16) << 8;
     if cfg!(target_endian = "big")
     {
@@ -59,7 +59,7 @@ pub fn read_u32_from_file(mut file: &std::fs::File) -> u32
     // We read exactly 32 bits of data in the file.
     // Depending of the architecture of the processor, the data can be in little endian or in big endian.
     // So if the data in the file are in little endian, you must swap the data before to make bitwise operation (TO VERIFY).
-    file.read_exact(&mut au8_buffer);
+    let _result = file.read_exact(&mut au8_buffer);
 
     let mut u32_valuetmp : u32;
 
@@ -100,7 +100,7 @@ pub fn read_u128_from_file(mut file: &std::fs::File) -> u128
     // We read exactly 128 bits of data in the file.
     // Depending of the architecture of the processor, the data can be in little endian or in big endian.
     // So if the data in the file are in little endian, you must swap the data before to make bitwise operation (TO VERIFY).
-    file.read_exact(&mut au128_buffer);
+    let _result = file.read_exact(&mut au128_buffer);
 
     let mut u128_valuetmp : u128;
 

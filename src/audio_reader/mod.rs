@@ -41,16 +41,16 @@ impl QuInformationData for AudioInformation
     fn convert_to_key_map(&self) -> Vec<(String, crate::Controller::QuAvailableTypeInEvent, String)>
     {
         let mut key_map: Vec<(String, crate::Controller::QuAvailableTypeInEvent, String)> = Vec::new();
-        key_map.push(("music_name".to_string(), Controller::QuAvailableTypeInEvent::string, self.m_str_music_name.clone()));
-        key_map.push(("music_type".to_string(), Controller::QuAvailableTypeInEvent::string, self.m_str_music_type.clone()));
-        key_map.push(("artist_name".to_string(), Controller::QuAvailableTypeInEvent::string, self.m_str_artist_name.clone()));
-        key_map.push(("track_number".to_string(), Controller::QuAvailableTypeInEvent::string, self.m_str_tracknumber.clone()));
-        key_map.push(("album".to_string(), Controller::QuAvailableTypeInEvent::string, self.m_str_album.clone()));
-        key_map.push(("date".to_string(), Controller::QuAvailableTypeInEvent::string, self.m_str_date.clone()));
-        key_map.push(("duration".to_string(), Controller::QuAvailableTypeInEvent::string, self.m_str_duration.clone()));
-        key_map.push(("track_rate".to_string(), Controller::QuAvailableTypeInEvent::string, self.m_rate.to_string()));
-        key_map.push(("channel_count".to_string(), Controller::QuAvailableTypeInEvent::string, self.m_channel_count.to_string()));
-        key_map.push(("bits_per_sample".to_string(), Controller::QuAvailableTypeInEvent::string, self.m_bits_per_sample.to_string()));
+        key_map.push(("music_name".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_music_name.clone()));
+        key_map.push(("music_type".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_music_type.clone()));
+        key_map.push(("artist_name".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_artist_name.clone()));
+        key_map.push(("track_number".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_tracknumber.clone()));
+        key_map.push(("album".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_album.clone()));
+        key_map.push(("date".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_date.clone()));
+        key_map.push(("duration".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_duration.clone()));
+        key_map.push(("track_rate".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_rate.to_string()));
+        key_map.push(("channel_count".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_channel_count.to_string()));
+        key_map.push(("bits_per_sample".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_bits_per_sample.to_string()));
 
         return key_map;
     }
