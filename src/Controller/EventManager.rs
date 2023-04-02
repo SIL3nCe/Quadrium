@@ -23,6 +23,7 @@ use crate::Controller::QuInformationData;
 ///
 /// Declaration of an event inside the event manager of Quadrium
 /// All the event MUST contains a type and a list of QuInformationData.
+/// The type of an event must be specified by the application and it is recommended to use enum structure.
 /// Each event must contains a standard definition to allow interaction between the view and the model
 ///
 /// # Attributes
@@ -44,12 +45,12 @@ pub struct QuEvent<EventType>
 /// # How to use it
 /// You must create the event manager in the beginning of the application with the function :
 /// ```
-/// let event_manager: Arc<Mutex<EventManager>> = EventManager::create_event_manager();
+/// let event_manager: Arc<Mutex<EventManager>> = EventManager::create_event_manager::<EventType>();
 /// ```
 ///
 /// Then you can register listeners for an event type with a closures :
 /// ```
-/// event_manager.lock().unwrap().register_listener(QuEventType::EMusicInformationRetrieved, |event|
+/// event_manager.lock().unwrap().register_listener(EventType::EEventAsked, |event|
 /// {
 ///     // Your closures code
 /// });
@@ -63,12 +64,27 @@ pub struct QuEvent<EventType>
 ///
 /// To send event inside the event manager, you need to call the push_event function like this :
 /// ```
+/// struct AskMusicInformation
+/// {
+///     m_path_to_file: String,
+/// }
+///
+/// impl QuInformationData for AskMusicInformation
+/// {
+///     fn convert_to_key_map(&self) -> Vec<(String, QuAvailableTypeInEvent, String)>
+///     {
+///         let mut vec: Vec<(String, QuAvailableTypeInEvent, String)> = Vec::new();
+///         vec.push(("path_file".to_string(), QuAvailableTypeInEvent::String, self.m_path_to_file.clone()));
+///         return vec;
+///     }
+/// }
+///
 /// let request_music_information = AskMusicInformation {
 ///     m_path_to_file: "the/path/to/file",
 /// };
-/// event_manager.lock().unwrap().push_event(QuEvent
+/// event_manager.lock().unwrap().push_event(QuEvent::<EventType>
 /// {
-///     m_event_type: QuEventType::EAskRetrieveMusicInformation,
+///     m_event_type: EventType::EEventToSend,
 ///     m_event_arg: Arc::new(request_music_information),
 /// });
 /// ```
@@ -110,7 +126,6 @@ where EventType: PartialEq + Clone
 }
 
 /// A structure which contains all the event sent
-/// Currently only used inside the singleton EVENT_QUEUE as a temporary event list during the update
 ///
 /// # Attribute
 /// * m_event_list: a thread-safe list of event
