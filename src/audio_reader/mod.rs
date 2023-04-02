@@ -21,8 +21,8 @@ use crate::{audio_reader, Controller};
 use crate::Controller::EventManager::{EventManager, push_event_in_tmp_queue, QuEvent, QuEventType};
 use crate::Controller::QuInformationData;
 
-/// \struct MusicInformation
-/// Structure that define all the information that define this music
+/// AudioInformation
+/// Structure that define all the information needed to define a title
 pub struct AudioInformation
 {
     pub m_str_music_name : String,
@@ -40,6 +40,8 @@ pub struct AudioInformation
 
 impl QuInformationData for AudioInformation
 {
+    ///
+    /// Implementation of the function which transform all the information to a vector of tuples
     fn convert_to_key_map(&self) -> Vec<(String, crate::Controller::QuAvailableTypeInEvent, String)>
     {
         let mut key_map: Vec<(String, crate::Controller::QuAvailableTypeInEvent, String)> = Vec::new();
@@ -58,6 +60,11 @@ impl QuInformationData for AudioInformation
     }
 }
 
+///
+/// Register all the event listeners dedicated to the audio/music
+///
+/// #Params
+/// event_manager: the event manager of the application
 pub fn register_event_listeners(event_manager: Arc<Mutex<EventManager>>)
 {
     event_manager.lock().unwrap().register_listener(QuEventType::EAskRetrieveMusicInformation, move |event| {
@@ -80,12 +87,7 @@ pub fn register_event_listeners(event_manager: Arc<Mutex<EventManager>>)
             m_event_arg: Arc::new(audio_information),
         };
 
-        //
-        // Nearly safe
-        unsafe
-            {
-                push_event_in_tmp_queue(event_to_send);
-            }
+        push_event_in_tmp_queue(event_to_send);
     });
 }
 
@@ -94,7 +96,7 @@ pub fn register_event_listeners(event_manager: Arc<Mutex<EventManager>>)
 // @deprecated
 pub mod flac_reader;
 
-/// \interface MusicReader
+/// \interface AudioReader
 /// \brief Interface to create reader of music file
 /// Quadrium can read different audio files such as WAV, Flac... This interface defines the way to create the reader of these files.
 /// This is a private interface. The user will only access to the MusicReaderManager.

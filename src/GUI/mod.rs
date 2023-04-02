@@ -19,7 +19,7 @@
 pub mod GUIManager;
 
 use dioxus::prelude::*;
-use crate::Controller::EventManager::{create_event_manager, EventManager, push_event_in_tmp_queue, QuEvent, QuEventType};
+use crate::Controller::EventManager::{create_event_manager, EventManager, QuEvent, QuEventType};
 use crate::Controller::{QuAvailableTypeInEvent, QuInformationData};
 use std::sync::Arc;
 use crate::audio_reader;
