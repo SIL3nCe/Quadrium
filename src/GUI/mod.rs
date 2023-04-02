@@ -19,8 +19,8 @@
 pub mod GUIManager;
 
 use dioxus::prelude::*;
-use crate::Controller::EventManager::{create_event_manager, EventManager, QuEvent, QuEventType};
-use crate::Controller::{QuAvailableTypeInEvent, QuInformationData};
+use crate::Controller::EventManager::{create_event_manager, EventManager, QuEvent};
+use crate::Controller::{QuAvailableTypeInEvent, QuEventType, QuInformationData};
 use std::sync::Arc;
 use crate::audio_reader;
 use crate::audio_reader::AudioReader;
@@ -47,7 +47,7 @@ pub fn launch_gui()
 
 fn App(cx: Scope) -> Element
 {
-    let event_manager = create_event_manager();
+    let event_manager = create_event_manager::<QuEventType>();
     let use_gui_manager = GUIManager::create_gui_manager();
 
     GUIManager::register_event_listeners(use_gui_manager, event_manager.clone());
@@ -69,7 +69,7 @@ fn App(cx: Scope) -> Element
                 let request_music_information = AskMusicInformation {
                     m_path_to_file: args[1].clone(),
                 };
-                event_manager.lock().unwrap().push_event(QuEvent
+                event_manager.lock().unwrap().push_event(QuEvent::<QuEventType>
                 {
                     m_event_type: QuEventType::EAskRetrieveMusicInformation,
                     m_event_arg: Arc::new(request_music_information),

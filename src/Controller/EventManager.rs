@@ -20,29 +20,6 @@ use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
 use crate::Controller::QuInformationData;
 
-/// Enum which contains all the event of the application to communicate between the view and the model
-/// To enable new functionality, you MUST create the event view to model and an event model to view
-/// The new events created will be automatically accepted by the event manager.
-#[derive(PartialEq, Clone)]
-pub enum QuEventType
-{
-    //
-    // All input possible
-    EAskRetrieveMusicDirectory, // Ask to retrieve musics from a directory
-    EAskRetrieveMusicInformation,   // Ask to retrieve the metadata of the music
-    EAskReadMusic,  // Ask to play/pause/stop the music
-    EAskOperationPlaylist, // Ask the creation/suppression/modification of a playlist with a list of musics
-    EAskTryRetrievePlayList,    // Ask to retrieve a playlist or all the playlist
-
-    //
-    // All output possible
-    EMusicDirectoryRetrieved,   // result of the scan on the directory
-    EMusicInformationRetrieved, // result of the read of metadata of the music
-    EReadMusicState,    // result of the operation on the music
-    EOperationPlaylistState,    // result of the operation to apply to a playlist
-    EPlaylistRetrieved, // result of the retrieving of the playlist
-}
-
 ///
 /// Declaration of an event inside the event manager of Quadrium
 /// All the event MUST contains a type and a list of QuInformationData.
@@ -52,9 +29,9 @@ pub enum QuEventType
 /// * m_event_type: the type of the event
 /// * m_event_arg: the information sent through the event
 #[derive(Clone)]
-pub struct QuEvent
+pub struct QuEvent<EventType>
 {
-    pub m_event_type: QuEventType,  // The type of the event
+    pub m_event_type: EventType,  // The type of the event
     pub m_event_arg : Arc<dyn QuInformationData + Send + Sync>, // All the information sent inside the event
 }
 
@@ -122,12 +99,14 @@ pub struct QuEvent
 ///     push_event_in_tmp_queue(event_to_send);
 /// });
 /// ```
-pub struct EventManager
+pub struct EventManager<EventType>
+where EventType: PartialEq + Clone
 {
-    m_event_list : Mutex<Vec<QuEvent>>,
-    m_register_event_listeners : Mutex<Vec<(QuEventType,Vec<Arc<Mutex<dyn FnMut(&QuEvent) + Send + Sync + 'static>>>)>>,
+    m_event_list : Mutex<Vec<QuEvent<EventType>>>,
+    m_register_event_listeners : Mutex<Vec<(EventType,Vec<Arc<Mutex<dyn FnMut(&QuEvent<EventType>) + Send + Sync + 'static>>>)>>,
     m_need_update : Arc<(Mutex<bool>, Condvar)>,
     m_stop_update : bool,
+    m_tmp_event_queue : Arc<Mutex<EventQueue<EventType>>>,
 }
 
 /// A structure which contains all the event sent
@@ -135,54 +114,23 @@ pub struct EventManager
 ///
 /// # Attribute
 /// * m_event_list: a thread-safe list of event
-pub struct EventQueue
+pub struct EventQueue<EventType>
 {
-    m_event_list : Mutex<Vec<QuEvent>>,
+    m_event_list : Mutex<Vec<QuEvent<EventType>>>,
 }
-
-///
-/// Singleton used to save all the event send during the update process
-/// Currently unsafe block to use it because rust do not accept static mut as safe code.
-/// However the code is nearly safe.
-static mut EVENT_QUEUE: EventQueue = EventQueue
-{
-    m_event_list: Mutex::new(Vec::new()),
-};
 
 ///
 /// Function to push event inside the temporary queue
 ///
 /// # Parameter
 /// event: The event to push inside the temporary queue.
-pub fn push_event_in_tmp_queue(event: QuEvent)
+pub fn push_event_in_tmp_queue<EventType>(event: QuEvent<EventType>, tmp_event_queue: Arc<Mutex<EventQueue<EventType>>>)
 {
-    unsafe
-        {
-            EVENT_QUEUE.m_event_list.lock().unwrap().push(event);
-        }
+    tmp_event_queue.lock().unwrap().m_event_list.lock().unwrap().push(event);
 }
 
-///
-/// Get the events inside the temporary queue
-pub fn get_events_in_tmp_queue() -> Vec<QuEvent>
-{
-    unsafe
-        {
-            return EVENT_QUEUE.m_event_list.lock().unwrap().clone();
-        }
-}
-
-///
-/// Clears the temporary queue
-pub fn clear_event_in_tmp_queue()
-{
-    unsafe
-        {
-            EVENT_QUEUE.m_event_list.lock().unwrap().clear();
-        }
-}
-
-impl EventManager
+impl<EventType> EventManager<EventType>
+    where EventType: PartialEq + Clone + Send + Sync + 'static
 {
     ///
     /// Push an event inside the event manager
@@ -191,7 +139,7 @@ impl EventManager
     /// # Parameters
     /// * self: a mutable references of the event manager
     /// * event: the event to push
-    pub fn push_event(&mut self, event: QuEvent)
+    pub fn push_event(&mut self, event: QuEvent<EventType>)
     {
         self.m_event_list.lock().unwrap().push(event);
         let (lock, cvar) = &*self.m_need_update;
@@ -208,8 +156,8 @@ impl EventManager
     /// # Parameters
     /// * self: a mutable references of the event manager
     /// * callback: a function/closures which take as parameter a QuEvent and returns nothing
-    pub fn register_listener<Function>(&mut self, event_type: QuEventType, callback: Function) where
-        Function: FnMut(&QuEvent) + Send + Sync + 'static
+    pub fn register_listener<Function>(&mut self, event_type: EventType, callback: Function) where
+        Function: FnMut(&QuEvent<EventType>) + Send + Sync + 'static
     {
         let mut is_added : bool = false;
         let mut register_event_listeners = self.m_register_event_listeners.lock().unwrap();
@@ -226,7 +174,7 @@ impl EventManager
 
         if !is_added
         {
-            let mut initial_vec: Vec<Arc<Mutex<dyn FnMut(&QuEvent) + Send + Sync>>> = Vec::new();
+            let mut initial_vec: Vec<Arc<Mutex<dyn FnMut(&QuEvent<EventType>) + Send + Sync>>> = Vec::new();
             initial_vec.push(callback_boxed.clone());
             register_event_listeners.push((event_type, initial_vec));
         }
@@ -236,6 +184,11 @@ impl EventManager
         *started = true;
 
         cvar.notify_one();
+    }
+
+    pub fn get_temporary_queue(&self) -> Arc<Mutex<EventQueue<EventType>>>
+    {
+        return self.m_tmp_event_queue.clone();
     }
 
     ///
@@ -269,13 +222,13 @@ impl EventManager
         }
         self.m_event_list.lock().unwrap().clear();
 
-        //
-        // Nearly safe
-        unsafe
-            {
-                self.m_event_list = Mutex::from(get_events_in_tmp_queue());
-                clear_event_in_tmp_queue();
-            }
+        let mut event_list = self.m_event_list.lock().unwrap();
+        let mut tmp_queue = self.m_tmp_event_queue.lock().unwrap();
+        for event in tmp_queue.m_event_list.lock().unwrap().iter()
+        {
+            event_list.push(event.clone());
+        }
+        tmp_queue.m_event_list.lock().unwrap().clear();
     }
 
     ///
@@ -324,7 +277,8 @@ impl EventManager
 ///
 /// #Return
 /// Return a thread compatible event manager
-pub fn create_event_manager() -> Arc<Mutex<EventManager>>
+pub fn create_event_manager<EventType>() -> Arc<Mutex<EventManager<EventType>>>
+    where EventType: PartialEq + Clone + Send + Sync + 'static
 {
     let event_manager = Arc::new(Mutex::new(
         EventManager
@@ -333,6 +287,9 @@ pub fn create_event_manager() -> Arc<Mutex<EventManager>>
             m_register_event_listeners: Mutex::new(Vec::new()),
             m_stop_update: false,
             m_need_update: Arc::new((Mutex::new(false), Condvar::new())),
+            m_tmp_event_queue: Arc::new(Mutex::new(EventQueue::<EventType>{
+                m_event_list: Mutex::new(Vec::new()),
+            })),
         }
     ));
     return event_manager;

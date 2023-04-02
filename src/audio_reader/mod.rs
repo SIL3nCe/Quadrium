@@ -18,8 +18,8 @@
 
 use std::sync::{Arc, Mutex};
 use crate::{audio_reader, Controller};
-use crate::Controller::EventManager::{EventManager, push_event_in_tmp_queue, QuEvent, QuEventType};
-use crate::Controller::QuInformationData;
+use crate::Controller::EventManager::{EventManager, push_event_in_tmp_queue, QuEvent};
+use crate::Controller::{QuEventType, QuInformationData};
 
 /// AudioInformation
 /// Structure that define all the information needed to define a title
@@ -65,8 +65,9 @@ impl QuInformationData for AudioInformation
 ///
 /// #Params
 /// event_manager: the event manager of the application
-pub fn register_event_listeners(event_manager: Arc<Mutex<EventManager>>)
+pub fn register_event_listeners(event_manager: Arc<Mutex<EventManager::<QuEventType>>>)
 {
+    let tmp_event_queue = event_manager.lock().unwrap().get_temporary_queue().clone();
     event_manager.lock().unwrap().register_listener(QuEventType::EAskRetrieveMusicInformation, move |event| {
         let argument = event.m_event_arg.convert_to_key_map();
         if argument.len() != 1
@@ -81,13 +82,13 @@ pub fn register_event_listeners(event_manager: Arc<Mutex<EventManager>>)
 
         let audio_information = flac_reader.read_information(argument[0].2.clone());
 
-        let event_to_send = QuEvent
+        let event_to_send = QuEvent::<QuEventType>
         {
             m_event_type: QuEventType::EMusicInformationRetrieved,
             m_event_arg: Arc::new(audio_information),
         };
 
-        push_event_in_tmp_queue(event_to_send);
+        push_event_in_tmp_queue(event_to_send, tmp_event_queue.clone());
     });
 }
 

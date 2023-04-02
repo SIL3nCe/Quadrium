@@ -29,6 +29,30 @@ pub enum QuAvailableTypeInEvent
     Int64,
 }
 
+
+/// Enum which contains all the event of the application to communicate between the view and the model
+/// To enable new functionality, you MUST create the event view to model and an event model to view
+/// The new events created will be automatically accepted by the event manager.
+#[derive(PartialEq, Clone)]
+pub enum QuEventType
+{
+    //
+    // All input possible
+    EAskRetrieveMusicDirectory, // Ask to retrieve musics from a directory
+    EAskRetrieveMusicInformation,   // Ask to retrieve the metadata of the music
+    EAskReadMusic,  // Ask to play/pause/stop the music
+    EAskOperationPlaylist, // Ask the creation/suppression/modification of a playlist with a list of musics
+    EAskTryRetrievePlayList,    // Ask to retrieve a playlist or all the playlist
+
+    //
+    // All output possible
+    EMusicDirectoryRetrieved,   // result of the scan on the directory
+    EMusicInformationRetrieved, // result of the read of metadata of the music
+    EReadMusicState,    // result of the operation on the music
+    EOperationPlaylistState,    // result of the operation to apply to a playlist
+    EPlaylistRetrieved, // result of the retrieving of the playlist
+}
+
 pub trait QuInformationData
 {
     fn convert_to_key_map(&self) -> Vec<(String, QuAvailableTypeInEvent, String)>;

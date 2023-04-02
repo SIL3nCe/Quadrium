@@ -18,7 +18,8 @@
 
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::AtomicBool;
-use crate::Controller::EventManager::{EventManager, QuEvent, QuEventType};
+use crate::Controller::EventManager::{EventManager, QuEvent};
+use crate::Controller::QuEventType;
 
 /// Structure containing all the information needed by the GUI
 /// Will be used inside the GUI library to update the state
@@ -35,7 +36,7 @@ pub struct GUIManager
 ///# Arguments
 /// * gui_manager : The current gui_manager
 /// * event : The event coming from an AudioInformation
-fn read_music_information_from_event(gui_manager: &Arc<GUIManager>, event: &QuEvent)
+fn read_music_information_from_event(gui_manager: &Arc<GUIManager>, event: &QuEvent::<QuEventType>)
 {
     let tuple_informations = event.m_event_arg.convert_to_key_map();
     for tuple_information in tuple_informations
@@ -50,7 +51,7 @@ fn read_music_information_from_event(gui_manager: &Arc<GUIManager>, event: &QuEv
 /// # Arguments
 /// * gui_manager : the current gui manager
 /// * event_manager : the current event_manager
-pub fn register_event_listeners(gui_manager: Arc<GUIManager>, event_manager: Arc<Mutex<EventManager>>)
+pub fn register_event_listeners(gui_manager: Arc<GUIManager>, event_manager: Arc<Mutex<EventManager::<QuEventType>>>)
 {
     let tmp_gui_manager = gui_manager.clone();
     event_manager.lock().unwrap().register_listener(QuEventType::EMusicInformationRetrieved, move |event| {
