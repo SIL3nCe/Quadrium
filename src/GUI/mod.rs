@@ -18,12 +18,15 @@
 
 pub mod GUIManager;
 
+use std::fs::File;
 use dioxus::prelude::*;
 use crate::Controller::EventManager::{create_event_manager, EventManager, QuEvent, QuAvailableTypeInEvent, QuInformationData};
 use crate::Controller::{QuEventType};
 use std::sync::Arc;
+use dioxus_desktop::*;
 use crate::audio_reader;
 use crate::audio_reader::AudioReader;
+use dioxus_desktop::tao::window::Icon;
 
 struct AskMusicInformation
 {
@@ -42,7 +45,20 @@ impl QuInformationData for AskMusicInformation
 
 pub fn launch_gui()
 {
-    dioxus_desktop::launch(App);
+    let mut decoder = png::Decoder::new(File::open("Resource/Logo/quadrium_dark_logo.png").unwrap());
+    let mut reader = decoder.read_info().unwrap();
+
+    let mut img_data = vec![0; reader.output_buffer_size()];
+    let info = reader.next_frame(&mut img_data).unwrap();
+
+    let icon = Icon::from_rgba(img_data, info.width, info.height);
+
+    let mut window = WindowBuilder::new();
+    window = window.with_title("Quadrium Music Player");
+    window = window.with_window_icon(Option::from(icon.unwrap()));
+    let mut config = Config::new();
+    config = config.with_window(window.clone());
+    dioxus_desktop::launch_cfg(App, config);
 }
 
 fn App(cx: Scope) -> Element
