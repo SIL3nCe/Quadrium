@@ -18,10 +18,9 @@
 
 use std::sync::{Arc, Mutex};
 use crate::{audio_reader, Controller};
-use crate::Controller::EventManager::{EventManager, push_event_in_tmp_queue, QuEvent};
-use crate::Controller::{QuEventType, QuInformationData};
+use crate::Controller::EventManager::{EventManager, push_event_in_tmp_queue, QuEvent, QuInformationData};
+use crate::Controller::{QuEventType};
 
-/// AudioInformation
 /// Structure that define all the information needed to define a title
 pub struct AudioInformation
 {
@@ -42,19 +41,19 @@ impl QuInformationData for AudioInformation
 {
     ///
     /// Implementation of the function which transform all the information to a vector of tuples
-    fn convert_to_key_map(&self) -> Vec<(String, crate::Controller::QuAvailableTypeInEvent, String)>
+    fn convert_to_key_map(&self) -> Vec<(String, Controller::EventManager::QuAvailableTypeInEvent, String)>
     {
-        let mut key_map: Vec<(String, crate::Controller::QuAvailableTypeInEvent, String)> = Vec::new();
-        key_map.push(("music_name".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_music_name.clone()));
-        key_map.push(("music_type".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_music_type.clone()));
-        key_map.push(("artist_name".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_artist_name.clone()));
-        key_map.push(("track_number".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_tracknumber.clone()));
-        key_map.push(("album".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_album.clone()));
-        key_map.push(("date".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_date.clone()));
-        key_map.push(("duration".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_str_duration.clone()));
-        key_map.push(("track_rate".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_rate.to_string()));
-        key_map.push(("channel_count".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_channel_count.to_string()));
-        key_map.push(("bits_per_sample".to_string(), Controller::QuAvailableTypeInEvent::String, self.m_bits_per_sample.to_string()));
+        let mut key_map: Vec<(String, Controller::EventManager::QuAvailableTypeInEvent, String)> = Vec::new();
+        key_map.push(("music_name".to_string(), Controller::EventManager::QuAvailableTypeInEvent::String, self.m_str_music_name.clone()));
+        key_map.push(("music_type".to_string(), Controller::EventManager::QuAvailableTypeInEvent::String, self.m_str_music_type.clone()));
+        key_map.push(("artist_name".to_string(), Controller::EventManager::QuAvailableTypeInEvent::String, self.m_str_artist_name.clone()));
+        key_map.push(("track_number".to_string(), Controller::EventManager::QuAvailableTypeInEvent::String, self.m_str_tracknumber.clone()));
+        key_map.push(("album".to_string(), Controller::EventManager::QuAvailableTypeInEvent::String, self.m_str_album.clone()));
+        key_map.push(("date".to_string(), Controller::EventManager::QuAvailableTypeInEvent::String, self.m_str_date.clone()));
+        key_map.push(("duration".to_string(), Controller::EventManager::QuAvailableTypeInEvent::String, self.m_str_duration.clone()));
+        key_map.push(("track_rate".to_string(), Controller::EventManager::QuAvailableTypeInEvent::String, self.m_rate.to_string()));
+        key_map.push(("channel_count".to_string(), Controller::EventManager::QuAvailableTypeInEvent::String, self.m_channel_count.to_string()));
+        key_map.push(("bits_per_sample".to_string(), Controller::EventManager::QuAvailableTypeInEvent::String, self.m_bits_per_sample.to_string()));
 
         return key_map;
     }
@@ -63,7 +62,7 @@ impl QuInformationData for AudioInformation
 ///
 /// Register all the event listeners dedicated to the audio/music
 ///
-/// #Params
+/// # Params
 /// event_manager: the event manager of the application
 pub fn register_event_listeners(event_manager: Arc<Mutex<EventManager::<QuEventType>>>)
 {
@@ -97,8 +96,7 @@ pub fn register_event_listeners(event_manager: Arc<Mutex<EventManager::<QuEventT
 // @deprecated
 pub mod flac_reader;
 
-/// \interface AudioReader
-/// \brief Interface to create reader of music file
+/// trait to create reader of music file
 /// Quadrium can read different audio files such as WAV, Flac... This interface defines the way to create the reader of these files.
 /// This is a private interface. The user will only access to the MusicReaderManager.
 pub trait AudioReader

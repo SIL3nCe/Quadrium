@@ -22,7 +22,56 @@
 
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
-use crate::Controller::QuInformationData;
+
+///
+/// Enum defining all the parameters' type accepted for QuInformationData
+pub enum QuAvailableTypeInEvent
+{
+    /// String parameters
+    String,
+
+    /// float parameters
+    Float,
+
+    /// uint8 parameters
+    Uint8,
+
+    /// uint32 parameters
+    Uint32,
+
+    /// uint64 parameters
+    Uint64,
+
+    /// int8 parameters
+    Int8,
+
+    /// int32 parameters
+    Int32,
+
+    /// int64 parameters
+    Int64,
+}
+
+/// Trait allowing to send data through event.
+/// Contains only one function which allows to convert attributes of the implemented structure
+/// inside a tuple of fields defined by the string of the fields, the types of the parameters and
+/// the value of the parameters encoded inside a string
+pub trait QuInformationData
+{
+    ///
+    /// Convert all the attributes inside the implemented structure to an array of tuple.
+    /// The tuple contains in order :
+    /// 1. The field in String
+    /// 2. The type of the parameters
+    /// 3. The parameters encoded inside a string
+    ///
+    /// # Params
+    /// self: Reference to the QuInformationData itself
+    ///
+    /// # Return
+    /// A vector of tuples containing all the attributes encoded
+    fn convert_to_key_map(&self) -> Vec<(String, QuAvailableTypeInEvent, String)>;
+}
 
 ///
 /// Declaration of an event inside the event manager of Quadrium
@@ -78,7 +127,8 @@ pub struct QuEvent<EventType>
 ///     fn convert_to_key_map(&self) -> Vec<(String, QuAvailableTypeInEvent, String)>
 ///     {
 ///         let mut vec: Vec<(String, QuAvailableTypeInEvent, String)> = Vec::new();
-///         vec.push(("path_file".to_string(), QuAvailableTypeInEvent::String, self.m_path_to_file.clone()));
+///         vec.push(("path_file".to_string(), QuAvailableTypeInEvent::String,
+///             self.m_path_to_file.clone()));
 ///         return vec;
 ///     }
 /// }
@@ -96,8 +146,12 @@ pub struct QuEvent<EventType>
 /// If you send an event inside a listener, it is mandatory to push the event inside the temporary queue.
 /// Example :
 /// ```
-/// event_manager.lock().unwrap().register_listener(QuEventType::EAskRetrieveMusicInformation, move |event| {
+/// let tmp_event_queue = event_manager.lock().unwrap().get_temporary_queue().clone();
+/// event_manager.lock().unwrap().register_listener(QuEventType::EAskRetrieveMusicInformation,
+///     move |event|
+/// {
 ///     let argument = event.m_event_arg.convert_to_key_map();
+///
 ///     if argument.len() != 1
 ///     {
 ///         return;
@@ -105,27 +159,34 @@ pub struct QuEvent<EventType>
 ///
 ///     let flac_reader = audio_reader::flac_reader::FlacReader
 ///     {
-///
 ///     };
 ///
 ///     let audio_information = flac_reader.read_information(argument[0].2.clone());
-///
-///     let event_to_send = QuEvent
+///     let event_to_send = QuEvent::<QuEventType>
 ///     {
 ///         m_event_type: QuEventType::EMusicInformationRetrieved,
 ///         m_event_arg: Arc::new(audio_information),
 ///     };
-///
-///     push_event_in_tmp_queue(event_to_send);
+///     push_event_in_tmp_queue(event_to_send, tmp_event_queue.clone());
 /// });
 /// ```
 pub struct EventManager<EventType>
 where EventType: PartialEq + Clone
 {
+    /// The list of all event sent
     m_event_list : Mutex<Vec<QuEvent<EventType>>>,
+
+    /// The list of all event listeners defining by a callback
     m_register_event_listeners : Mutex<Vec<(EventType,Vec<Arc<Mutex<dyn FnMut(&QuEvent<EventType>) + Send + Sync + 'static>>>)>>,
+
+    /// Tuples containing a boolean to know if the event manager need to process event and a condition variable
+    /// to allow passive wait.
     m_need_update : Arc<(Mutex<bool>, Condvar)>,
+
+    /// boolean to stop the process of the event
     m_stop_update : bool,
+
+    /// temporary queue used to save event push during the process of the event
     m_tmp_event_queue : Arc<Mutex<EventQueue<EventType>>>,
 }
 
@@ -138,7 +199,6 @@ pub struct EventQueue<EventType>
     m_event_list : Mutex<Vec<QuEvent<EventType>>>,
 }
 
-///
 /// Function to push event inside the temporary queue
 ///
 /// # Parameter
@@ -151,7 +211,6 @@ pub fn push_event_in_tmp_queue<EventType>(event: QuEvent<EventType>, tmp_event_q
 impl<EventType> EventManager<EventType>
     where EventType: PartialEq + Clone + Send + Sync + 'static
 {
-    ///
     /// Push an event inside the event manager
     /// MUST be used only if the event is send not inside a lock of the event manager
     ///
@@ -168,7 +227,6 @@ impl<EventType> EventManager<EventType>
         cvar.notify_one();
     }
 
-    ///
     /// Register a listener to a specific event type.
     /// The callback must be a closure compatible with thread.
     ///
@@ -210,7 +268,6 @@ impl<EventType> EventManager<EventType>
         return self.m_tmp_event_queue.clone();
     }
 
-    ///
     /// Process all the events inside the event manager.
     /// Will call all callback registered with the events.
     ///
@@ -250,7 +307,6 @@ impl<EventType> EventManager<EventType>
         tmp_queue.m_event_list.lock().unwrap().clear();
     }
 
-    ///
     /// Launch the process event thread
     ///
     /// # Parameters
@@ -280,10 +336,9 @@ impl<EventType> EventManager<EventType>
         });
     }
 
-    ///
     /// Stop the process events threads
     ///
-    /// #Parameters
+    /// # Parameters
     /// self : a mutable event manager
     pub fn stop(mut self)
     {
@@ -291,10 +346,9 @@ impl<EventType> EventManager<EventType>
     }
 }
 
-///
 /// Create the event managers with all the attributes initialize to default values/
 ///
-/// #Return
+/// # Return
 /// Return a thread compatible event manager
 pub fn create_event_manager<EventType>() -> Arc<Mutex<EventManager<EventType>>>
     where EventType: PartialEq + Clone + Send + Sync + 'static
