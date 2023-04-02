@@ -16,6 +16,10 @@
  *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+//! Mod which implements event manager to communicate through events.
+//!
+//! Primarily designed to interact between GUI and Models in a MVP (Model View Projector) design pattern
+
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
 use crate::Controller::QuInformationData;
@@ -37,7 +41,7 @@ pub struct QuEvent<EventType>
 }
 
 ///
-/// The event manager which will be used to help interaction between the view and the model
+/// The event manager is designed to help interaction between the view and the model.
 /// This is the projection in the MVP (Model View Projector), a sub class of  the MVC (Model View Controller).
 /// It is modular and accept a large choice of event. The processing of the events is realized inside its own thread.
 /// Even if it is not a Singleton to avoid unsafe block, it is recommended to create only one event manager.
