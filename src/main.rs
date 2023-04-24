@@ -57,7 +57,7 @@ fn main() -> std::io::Result<()>
     let file_path = file_path;
     let audio_information = reader.read_information(file_path.clone());
     println!("\nAudio Information\nrate: {0}\nbits per sample: {1}\nchannel count: {2}", audio_information.m_rate, audio_information.m_bits_per_sample, audio_information.m_channel_count);
-    println!("\nTrack information:\nTrackname: {0}\nArtist: {1}\nAlbum: {2}\nDate: {3}", audio_information.m_str_music_name, audio_information.m_str_artist_name, audio_information.m_str_album, audio_information.m_str_date);
+    println!("\nTrack information:\nTrackname: {0}\nArtist: {1}\nAlbum: {2}\nDate: {3}\nGenre: {4}", audio_information.m_str_music_name, audio_information.m_str_artist_name, audio_information.m_str_album, audio_information.m_str_date, audio_information.m_str_music_type);
 
     GUI::launch_gui();
 

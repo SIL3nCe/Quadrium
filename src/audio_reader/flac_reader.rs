@@ -20,9 +20,10 @@
 // Based on https://xiph.org/flac/format.html
 
 use std::fs::File;
+use std::mem::size_of;
 use crate::utils;
 use crate::audio_reader::{AudioInformation, AudioReader};
-use crate::utils::file_reader::{read_u32_from_file, read_u8_from_file};
+use crate::utils::file_reader::{read_u16_from_file, read_u32_from_file, read_u64_from_file, read_u8_from_file};
 
 struct MetaDataHeader
 {
@@ -53,6 +54,18 @@ struct VorbisCommentBlock
 {
     m_vendor_string: String,
     m_user_comment_list: Vec<String>,
+}
+
+struct SeekPoint
+{
+    m_sample_number_first_sample: u64,
+    m_sample_offset: u64,
+    m_number_samples: u16
+}
+
+struct SeekTableBlock
+{
+    m_seekPoints : Vec<SeekPoint>
 }
 
 struct FrameHeader
@@ -165,10 +178,35 @@ fn read_streaminfo_block(file: &File) -> StreamBlockInfo
 
 fn read_block_padding(file: &File, number_padding: u32)
 {
-    for _i in 0..number_padding - 1
+    for _i in 0..number_padding
     {
         read_u8_from_file(file);
     }
+}
+
+fn read_seek_table(file: &File, size_block: u32) -> SeekTableBlock
+{
+    //
+    // Get the number of seek point
+    // Divide by 18 because it is the size in Bytes of a Seekpoint
+    let seek_point_count: u32 = size_block / 18;
+    let mut seekpoints = Vec::with_capacity(seek_point_count as usize);
+    for _i in 0..seek_point_count
+    {
+        let sample_number = read_u64_from_file(file).swap_bytes();
+        let sample_offset = read_u64_from_file(file).swap_bytes();
+        let number_samples = read_u16_from_file(file).swap_bytes();
+        seekpoints.push(SeekPoint
+        {
+            m_number_samples: number_samples,
+            m_sample_offset: sample_offset,
+            m_sample_number_first_sample: sample_number
+        });
+    }
+    return SeekTableBlock
+    {
+        m_seekPoints: seekpoints
+    };
 }
 
 fn read_block_application(file: &File, size_block: u32) -> ApplicationBlock
@@ -314,6 +352,7 @@ impl AudioReader for FlacReader
                 else if header_stream_info.m_block_type == 3
                 {
                     println!("Seektable");
+                    let _seek_table_data = read_seek_table(&file, header_stream_info.m_length);
                 }
                 else if header_stream_info.m_block_type == 4
                 {
@@ -342,10 +381,22 @@ impl AudioReader for FlacReader
                             let date_index = "DATE=".len();
                             audio_reader.m_str_date = comment[date_index..].to_string();
                         }
+                        else if comment.contains("YEAR")
+                        {
+                            //
+                            // Not standard but can be used in flac files so...
+                            let date_index = "YEAR=".len();
+                            audio_reader.m_str_date = comment[date_index..].to_string();
+                        }
                         else if comment.contains("ALBUM")
                         {
                             let album_index = "ALBUM=".len();
                             audio_reader.m_str_album = comment[album_index..].to_string();
+                        }
+                        else if comment.contains("GENRE")
+                        {
+                            let genre_index = "GENRE=".len();
+                            audio_reader.m_str_music_type = comment[genre_index..].to_string();
                         }
                     }
                 }

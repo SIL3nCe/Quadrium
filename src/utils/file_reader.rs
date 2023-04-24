@@ -91,6 +91,47 @@ pub fn read_u32_from_file(mut file: &std::fs::File) -> u32
     }
 }
 
+pub fn read_u64_from_file(mut file: &std::fs::File) -> u64
+{
+    let mut u64_value: u64 = 0;
+    let mut au8_buffer = [0; 8];
+
+    //
+    // We read exactly 64 bits of data in the file.
+    // Depending of the architecture of the processor, the data can be in little endian or in big endian.
+    // So if the data in the file are in little endian, you must swap the data before to make bitwise operation (TO VERIFY).
+    let _result = file.read_exact(&mut au8_buffer);
+
+    let mut u64_valuetmp : u64;
+
+    if cfg!(target_endian = "big")
+    {
+        //
+        // We make the bitwise operator in big endian
+        for i in 0..8
+        {
+            u64_valuetmp = au8_buffer[i] as u64;
+            u64_valuetmp >>= 8 * i;
+            u64_value += u64_valuetmp;
+        }
+
+        return u64_value;
+    }
+    else
+    {
+        //
+        // We make the bitwise operator in little endian
+        for i in 0..8
+        {
+            u64_valuetmp = au8_buffer[i] as u64;
+            u64_valuetmp <<= 8 * i;
+            u64_value += u64_valuetmp;
+        }
+
+        return u64_value;
+    }
+}
+
 pub fn read_u128_from_file(mut file: &std::fs::File) -> u128
 {
     let mut u128_value: u128 = 0;
