@@ -86,7 +86,7 @@ struct CuesheetTrackBlock
     m_is_audio: bool,
     m_pre_emphasis: bool,
     m_track_index_points_number: u8,
-    m_cuesheet_track_indices: Vec<CuesheetTrackIndex>
+    m_cuesheet_track_indices: Vec<CuesheetTrackIndexBlock>
 }
 
 struct CuesheetBlock
