@@ -25,6 +25,10 @@ use crate::utils;
 use crate::audio_reader::{AudioInformation, AudioReader};
 use crate::utils::file_reader::{read_u16_from_file, read_u32_from_file, read_u64_from_file, read_u8_from_file};
 
+/******************************************************
+ * Declaration of the different structures needed
+ * to extract informations of the flac files
+ ******************************************************/
 struct MetaDataHeader
 {
     m_is_last: bool,
@@ -117,12 +121,9 @@ pub struct FlacReader
 {
 }
 
-pub fn is_flac_file(file: & File) -> bool
-{
-    let value = utils::file_reader::read_u32_from_file(file);
-    let magic_number = 0x66 as u32 | (0x4C as u32) << 8 | (0x61 as u32) << 16 | (0x43 as u32) << 24;
-    magic_number == value
-}
+/*****************************************************
+ * Functions not exposed needed to decodes flac files
+ *****************************************************/
 
 fn read_metadata_header(file: &File) -> MetaDataHeader
 {
@@ -436,6 +437,17 @@ fn read_frame_header(file: &File, stream_info: StreamBlockInfo)
     let sample_rate = rate_and_channel & 0xF0;
 
 
+}
+
+/**************************************************
+ * Public functions for flac files
+ **************************************************/
+
+pub fn is_flac_file(file: & File) -> bool
+{
+    let value = utils::file_reader::read_u32_from_file(file);
+    let magic_number = 0x66 as u32 | (0x4C as u32) << 8 | (0x61 as u32) << 16 | (0x43 as u32) << 24;
+    magic_number == value
 }
 
 impl AudioReader for FlacReader
