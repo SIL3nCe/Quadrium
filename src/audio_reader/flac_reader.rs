@@ -68,6 +68,32 @@ struct SeekTableBlock
     m_seekPoints : Vec<SeekPoint>
 }
 
+struct CuesheetTrackIndexBlock
+{
+    m_offset_samples: u64,
+    m_index_point: u8
+}
+
+struct CuesheetTrackBlock
+{
+    m_track_offset_samples: u64,
+    m_track_number: u8,
+    m_track_isrc: [u8; 12],
+    m_is_audio: bool,
+    m_pre_emphasis: bool,
+    m_track_index_points_number: u8,
+    m_cuesheet_track_indices: Vec<CuesheetTrackIndex>
+}
+
+struct CuesheetBlock
+{
+    m_media_catalog_number: [u8; 128],
+    m_lead_in_number: u64,
+    m_is_cd: bool,
+    m_track_number: u8,
+    m_cuesheet_tracks: Vec<CuesheetTrackBlock>
+}
+
 struct FrameHeader
 {
 
@@ -76,6 +102,15 @@ struct FrameHeader
 struct FrameFooter
 {
 
+}
+
+pub struct FlacFile
+{
+    m_streaminfo: StreamBlockInfo,
+    m_application_infos: Vec<ApplicationBlock>,
+    m_vorbis_comment: Vec<VorbisCommentBlock>,
+    m_seektables: Vec<SeekTableBlock>,
+    m_cuesheets: Vec<CuesheetBlock>
 }
 
 pub struct FlacReader
@@ -266,6 +301,119 @@ fn read_vorbis_comment_block(file: &File, size_block: u32) -> VorbisCommentBlock
     };
 }
 
+fn read_cuesheet_track_index_block(file: &File) -> CuesheetTrackIndexBlock
+{
+    let offset_samples = read_u64_from_file(file).swap_bytes();
+    let index_point_number = read_u8_from_file(file).swap_bytes();
+
+    //
+    // Read empty data for padding
+    for _i in 0..3
+    {
+        read_u8_from_file(file);
+    }
+
+    return CuesheetTrackIndexBlock
+    {
+        m_offset_samples: offset_samples,
+        m_index_point: index_point_number,
+    };
+}
+
+fn read_cuesheet_track_block(file: &File) -> CuesheetTrackBlock
+{
+    let track_offset_in_samples = read_u64_from_file(file).swap_bytes();
+    let track_number = read_u8_from_file(file).swap_bytes();
+
+    //
+    // Read track ISRC
+    let mut read_track_isrc_array: [u8; 12] = [0; 12];
+    for iTrackISRCIndex in 0..12
+    {
+        read_track_isrc_array[iTrackISRCIndex] = read_u8_from_file(file);
+    }
+
+    //
+    // Read the different flags
+    let tmp_flags_track_type_pre_emphasis = read_u8_from_file(file).swap_bytes();
+    let is_audio: bool = tmp_flags_track_type_pre_emphasis & 0x1 == 1;
+    let is_pre_emphasis: bool = tmp_flags_track_type_pre_emphasis & 0x2 == 1;
+
+    //
+    // Seek to the next fields as required by specification
+    for _iEmptyDataIndex in 0..13
+    {
+        read_u8_from_file(file);
+    }
+
+    let track_index_point_number = read_u8_from_file(file).swap_bytes();
+    let mut cuesheet_track_indexes: Vec<CuesheetTrackIndexBlock> = Vec::new();
+    for _i in 0..track_index_point_number
+    {
+        cuesheet_track_indexes.push(read_cuesheet_track_index_block(file));
+    }
+
+    return CuesheetTrackBlock
+    {
+        m_track_offset_samples: track_offset_in_samples,
+        m_track_number: track_number,
+        m_track_isrc: read_track_isrc_array,
+        m_is_audio: is_audio,
+        m_pre_emphasis: is_pre_emphasis,
+        m_track_index_points_number: track_index_point_number,
+        m_cuesheet_track_indices: cuesheet_track_indexes,
+    };
+}
+
+fn read_cuesheet_block(file: &File, size_block: u32) -> CuesheetBlock
+{
+    //
+    // Read media catalog number
+    let mut media_catalog_number: [u8; 128] = [0; 128];
+    for iMediaCatalogNumber in 0..128
+    {
+        let current_number = read_u8_from_file(file);
+        media_catalog_number[iMediaCatalogNumber] = current_number;
+    }
+
+    //
+    // Read the number of lead in
+    let number_lead_in = read_u64_from_file(file).swap_bytes();
+
+    //
+    // Read the flag if it is a CD
+    let is_cd_in_u8 = read_u8_from_file(file).swap_bytes();
+    let is_cd = is_cd_in_u8 & 0x1 == 1;
+
+    //
+    // Move seek to the number of tracks
+    for _iEmptyDataIndex in 0..258
+    {
+        read_u8_from_file(file);
+    }
+
+    //
+    // Read the number of track
+    let number_tracks = read_u8_from_file(file).swap_bytes();
+
+    //
+    // Read the cuesheet tracks
+    let mut cuesheet_tracks: Vec<CuesheetTrackBlock> = Vec::new();
+    for _i in 0..number_tracks
+    {
+        cuesheet_tracks.push(read_cuesheet_track_block(file));
+    }
+
+    return CuesheetBlock
+    {
+        m_media_catalog_number: media_catalog_number,
+        m_lead_in_number: number_lead_in,
+        m_is_cd: is_cd,
+        m_track_number: number_tracks,
+        m_cuesheet_tracks: cuesheet_tracks,
+    }
+}
+
 fn read_frame_header(file: &File, stream_info: StreamBlockInfo)
 {
     //
@@ -403,6 +551,7 @@ impl AudioReader for FlacReader
                 else if header_stream_info.m_block_type == 5
                 {
                     println!("Cuesheet");
+                    let cuesheet_block = read_cuesheet_block(&file, header_stream_info.m_length);
                 }
                 else if header_stream_info.m_block_type == 6
                 {
