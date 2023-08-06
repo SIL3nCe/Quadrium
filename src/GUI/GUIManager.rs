@@ -33,7 +33,7 @@ pub struct GUIManager
 /// The information are decoded with the information presented inside the AudioInformation
 /// Currently, it is a test function
 ///
-///# Arguments
+/// # Arguments
 /// * gui_manager : The current gui_manager
 /// * event : The event coming from an AudioInformation
 fn read_music_information_from_event(gui_manager: &Arc<GUIManager>, event: &QuEvent::<QuEventType>)

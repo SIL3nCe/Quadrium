@@ -14,8 +14,7 @@ To install this project, you need to :
 Currently the project compiled on Windows and Linux. The other operating systems are not tested and so the support is not garanteed.
 
 # Depedencies
-* Dioxus 0.3.2
-* Dioxus-desktop 0.3.0
+* iced 0.10.0
 * png 0.17.7
 
-Currently Symphonia is present in the cargo.toml but is not currently use.
+Currently, Symphonia is present in the cargo.toml but is not currently use.

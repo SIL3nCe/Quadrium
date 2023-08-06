@@ -17,16 +17,13 @@
  */
 
 pub mod GUIManager;
+mod IcedGUIManager;
 
 use std::fs::File;
-use dioxus::prelude::*;
-use crate::Controller::EventManager::{create_event_manager, EventManager, QuEvent, QuAvailableTypeInEvent, QuInformationData};
-use crate::Controller::{QuEventType};
-use std::sync::Arc;
-use dioxus_desktop::*;
-use crate::audio_reader;
+use crate::Controller::EventManager::{QuAvailableTypeInEvent, QuInformationData};
 use crate::audio_reader::AudioReader;
-use dioxus_desktop::tao::window::Icon;
+use iced::{Settings, window};
+use iced::Application;
 
 struct AskMusicInformation
 {
@@ -45,54 +42,27 @@ impl QuInformationData for AskMusicInformation
 
 pub fn launch_gui()
 {
+    //
+    // Load the icon
     let mut decoder = png::Decoder::new(File::open("Resource/Logo/quadrium_dark_logo.png").unwrap());
     let mut reader = decoder.read_info().unwrap();
 
     let mut img_data = vec![0; reader.output_buffer_size()];
     let info = reader.next_frame(&mut img_data).unwrap();
 
-    let icon = Icon::from_rgba(img_data, info.width, info.height);
+    let result = iced::window::icon::from_rgba(img_data, info.width, info.height);
 
-    let mut window = WindowBuilder::new();
-    window = window.with_title("Quadrium Music Player");
-    window = window.with_window_icon(Option::from(icon.unwrap()));
-    let mut config = Config::new();
-    config = config.with_window(window.clone());
-    dioxus_desktop::launch_cfg(App, config);
-}
-
-fn App(cx: Scope) -> Element
-{
-    let event_manager = create_event_manager::<QuEventType>();
-    let use_gui_manager = GUIManager::create_gui_manager();
-
-    GUIManager::register_event_listeners(use_gui_manager, event_manager.clone());
-    audio_reader::register_event_listeners(event_manager.clone());
-    EventManager::launch(event_manager.clone());
-
-    cx.render(rsx!
-    {
-        div
-        {
-            "Quadrium Music Player"
-        }
-
-        button
-        {
-            onclick: move |event|
+    //
+    // Launch the GUI powered by Iced
+    // Will create the event manager and GUI manager as required
+    IcedGUIManager::IcedGUIManager::run(
+        Settings {
+            window : window::Settings
             {
-                let args: Vec<String> = std::env::args().collect();
-                let request_music_information = AskMusicInformation {
-                    m_path_to_file: args[1].clone(),
-                };
-                event_manager.lock().unwrap().push_event(QuEvent::<QuEventType>
-                {
-                    m_event_type: QuEventType::EAskRetrieveMusicInformation,
-                    m_event_arg: Arc::new(request_music_information),
-                });
+                icon : result.unwrap().into(),
+                ..window::Settings::default()
             },
-
-            "Get information data !"
+            ..Settings::default()
         }
-    })
+    );
 }
