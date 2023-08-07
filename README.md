@@ -1,4 +1,6 @@
 # Quadrium
+![Rust Ubuntu Build + Doc](https://github.com/SIL3nCe/Quadrium/workflows/Rust/badge.svg?branch=master)
+
 An audio player written in Rust
 
 # Status
