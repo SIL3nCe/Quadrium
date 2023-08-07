@@ -1,5 +1,5 @@
 # Quadrium
-![Rust Ubuntu Build + Doc](https://github.com/SIL3nCe/Quadrium/workflows/Rust/badge.svg?branch=master)
+[![Rust Ubuntu](https://github.com/SIL3nCe/Quadrium/workflows/Rust/badge.svg?branch=master)](https://github.com/SIL3nCe/Quadrium/actions/workflows/rust-ubuntu.yml)
 
 An audio player written in Rust
 
